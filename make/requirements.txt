@@ -12,4 +12,3 @@ pytz==2025.2
 streamlit==1.44.1
 geopandas==1.0.1
 scikit-learn==1.6.1
-contextily==1.6.2
