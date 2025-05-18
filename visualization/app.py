@@ -17,21 +17,22 @@ from streamlit_folium import folium_static
 import os
 
 # Set up environments of LakeFS
-lakefs_endpoint = os.getenv("LAKEFS_ENDPOINT", "http://lakefs-dev:8000")
-ACCESS_KEY = os.getenv("LAKEFS_ACCESS_KEY")
-SECRET_KEY = os.getenv("LAKEFS_SECRET_KEY")
+lakefs_endpoint = "http://lakefs-dev:8000/"
+ACCESS_KEY = "access_key"
+SECRET_KEY = "secret_key"
 
 # Setting S3FileSystem for access LakeFS
-fs = s3fs.S3FileSystem(
-    key=ACCESS_KEY,
-    secret=SECRET_KEY,
-    client_kwargs={'endpoint_url': lakefs_endpoint}
-)
+fs = {
+    "key": ACCESS_KEY,
+    "secret": SECRET_KEY,
+    "client_kwargs": {'endpoint_url': lakefs_endpoint}
+}
+
 # ---------- Load shapefile ----------
 @st.cache_data
 def load_shapefile():
     shapefile_lakefs_path = "s3://weather/main/tha_admbnda_adm1_rtsd_20220121.shp"
-    gdf = gpd.read_file(shapefile_lakefs_path, storage_options={'s3_additional_kwargs': {'EndpointUrl': lakefs_endpoint}})
+    gdf = gpd.read_file(path=shapefile_lakefs_path, storage_options=fs)
     gdf = gdf.drop(columns=gdf.select_dtypes(include=['datetime64']).columns)
     gdf = gdf.to_crs(epsg=4326)
     return gdf
@@ -40,8 +41,10 @@ def load_shapefile():
 @st.cache_data
 def query_parquet_data():
     firms_lakefs_path = "s3://weather/main/firms.parquet"
-    data_list = fs.glob(f"{firms_lakefs_path}/*/*/*/*/*")
-    df_firms = pd.concat([pd.read_parquet(f"s3://{path}", engine="pyarrow", filesystem=fs) for path in data_list], ignore_index=True)
+    df_firms = pd.read_parquet(    
+                path=firms_lakefs_path,
+                storage_options=fs
+)
     df_firms.drop_duplicates(inplace=True)
     df_firms['acq_date'] = pd.to_datetime(df_firms['acq_date']).dt.date
 
@@ -49,7 +52,8 @@ def query_parquet_data():
 
 # ---------- cache filtered result ----------
 @st.cache_data
-def filter_by_date(df, mode, date_start, date_end, date_exact):
+def filter_by_date(mode, date_start, date_end, date_exact):
+    df = query_parquet_data()
     if mode == 'latest':
         return df[df['acq_date'] == df['acq_date'].max()]
     elif mode == 'range':
@@ -60,7 +64,7 @@ def filter_by_date(df, mode, date_start, date_end, date_exact):
 # ---------- Generate Heatmap ----------
 def generate_heatmap(filter_mode, date_start, date_end, date_exact, gdf, df_all):
     # Filter
-    df_filtered = filter_by_date(df_all, filter_mode, date_start, date_end, date_exact)
+    df_filtered = df_all
 
     # Prepare heat data
     heat_data = []
@@ -146,7 +150,7 @@ def main():
 
     # Get the latest date available in the dataset
     if 'latest_date' not in st.session_state:
-        latest_df = filter_by_date(df_all, mode='latest', date_exact=None, date_start=None, date_end=None)
+        latest_df = filter_by_date( mode='latest', date_exact=None, date_start=None, date_end=None)
         latest_date = latest_df['acq_date'].max()  # Get the latest date from the dataset
         st.session_state.latest_date = latest_date
     latest_date = st.session_state.latest_date
@@ -170,7 +174,7 @@ def main():
 
     # Cache query result
     if key not in st.session_state:
-        st.session_state[key] = filter_by_date(df_all,filter_mode, start_date, end_date, exact_date)
+        st.session_state[key] = filter_by_date(filter_mode, start_date, end_date, exact_date)
 
     df_all = st.session_state[key]
 
