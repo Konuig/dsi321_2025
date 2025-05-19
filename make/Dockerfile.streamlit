@@ -10,7 +10,8 @@ RUN apt-get update && \
     apt-get install -y curl git && \
     pip install --no-cache-dir -r /tmp/requirements.txt && \
     pip install --upgrade streamlit && \
-    rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/* \
+    pip install fiona pyogrio
 
 COPY visualization /app
 

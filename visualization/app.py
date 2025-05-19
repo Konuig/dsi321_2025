@@ -31,8 +31,8 @@ fs = {
 # ---------- Load shapefile ----------
 @st.cache_data
 def load_shapefile():
-    shapefile_lakefs_path = "s3://weather/main/tha_admbnda_adm1_rtsd_20220121.shp"
-    gdf = gpd.read_file(path=shapefile_lakefs_path, storage_options=fs)
+    shapefile_lakefs_path = r"s3://weather/main/tha_admbnda_adm1_rtsd_20220121.shp"
+    gdf = gpd.read_file(shapefile_lakefs_path, engine="fiona", storage_options=fs)
     gdf = gdf.drop(columns=gdf.select_dtypes(include=['datetime64']).columns)
     gdf = gdf.to_crs(epsg=4326)
     return gdf
