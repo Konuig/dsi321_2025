@@ -65,6 +65,9 @@ The system includes:
   - Interactive map
   - Zoomable and filterable timeline
 
+  ![image 7-2](image/7-2.png)
+
+
 ### 2. Machine Learning (5 Points)
 - Model: **Random Forest Regression**
 - Target: `brightness`
@@ -73,6 +76,8 @@ The system includes:
   - Feature importance analysis highlights temperature and humidity as key indicators
   - Correlation matrix supports feature relationships
 - Tools: Scikit-learn, Matplotlib
+![Randomforest visual](image/RF.png)
+
 
 ---
 
