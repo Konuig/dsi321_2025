@@ -166,6 +166,10 @@ def apiweather_flow() :
         new_data = fetch_weather_data(i["lat"],i["lon"])
         df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
 
+    for col in df.columns:
+        if df[col].dtype == 'object':
+            df[col] = df[col].astype('string')
+
     # lakeFS credentials from your docker-compose.yml
     ACCESS_KEY = "access_key"
     SECRET_KEY = "secret_key"
@@ -195,6 +199,8 @@ def apiweather_flow() :
     lakefs_s3_path,
     storage_options=storage_options,
     partition_cols=["acq_year","acq_month","acq_day","acq_hour","acq_minute"],   # <-- crucial for partitioning by retrieval_time
+    engine="pyarrow",
+    index=False,
 )
 
 if __name__ == "__main__":
