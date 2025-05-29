@@ -30,7 +30,9 @@ def fetch_firms() :
         df_thai["acq_minute"] = pd.to_datetime(df_thai["acq_datetime_th"]).dt.minute
         df_thai["timestamp"] = df_thai["acq_datetime_th"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
-
+        for col in df_thai.columns:
+            if df_thai[col].dtype == 'object':
+                df_thai[col] = df_thai[col].astype('string')
         return df_thai
 
 
@@ -70,6 +72,8 @@ def firmsapi_flow() :
         lakefs_s3_path,
          storage_options=storage_options,
          partition_cols=["acq_year","acq_month","acq_day","acq_hour","acq_minute"],   # <-- crucial for partitioning by retrieval_time
+         engine="pyarrow",
+         index=False,
     )
 
 
